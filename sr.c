@@ -96,8 +96,6 @@ void A_output(struct msg message)
 */
 void A_input(struct pkt packet)
 {
-  int ackcount = 0;
-  int i;
 
   /* if received ACK is not corrupted */
   if (!IsCorrupted(packet)) {
@@ -105,13 +103,14 @@ void A_input(struct pkt packet)
       printf("----A: uncorrupted ACK %d is received\n",packet.acknum);
 
     if(!acked[packet.acknum]){
-      if (TRACE > 0)
+      if (TRACE > 0){
         printf("----A: ACK %d is not a duplicate\n",packet.acknum);
-        new_ACKs++;
-        acked[packet.acknum] = true;
+      }
+      new_ACKs++;
+      acked[packet.acknum] = true;
     
     /* update window */
-      if(packet.acknum == buffer[windowfirst.seqnum]){
+      if(packet.acknum == buffer[windowfirst].seqnum){
         while (windowcount > 0 && acked[buffer[windowfirst].seqnum]) {
           windowfirst = (windowfirst + 1) % WINDOWSIZE;
           windowcount--;
@@ -167,7 +166,7 @@ void A_init(void)
 /********* Receiver (B)  variables and procedures ************/
 
 static int expectedseqnum; /* the sequence number expected next by the receiver */
-static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
+static int B_nextseqnum __attribute__((unused));   /* the sequence number for the next packets sent by B */
 static struct pkt rec_pkt[SEQSPACE]; /* array to store packets received by B */
 static bool rec[SEQSPACE]; /* array to keep track of which packets have been received */
 
