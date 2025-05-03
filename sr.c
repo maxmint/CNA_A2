@@ -168,60 +168,56 @@ void A_init(void)
 
 static int expectedseqnum; /* the sequence number expected next by the receiver */
 static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
-
+static struct pkt rec_pkt[SEQSPACE]; /* array to store packets received by B */
+static bool rec[SEQSPACE]; /* array to keep track of which packets have been received */
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
-void B_input(struct pkt packet)
+void B_input(struct pkt packet) 
 {
   struct pkt sendpkt;
   int i;
 
-  /* if not corrupted and received packet is in order */
-  if  ( (!IsCorrupted(packet))  && (packet.seqnum == expectedseqnum) ) {
+  /* if not corrupted */
+  if (!IsCorrupted(packet)) {
     if (TRACE > 0)
       printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
     packets_received++;
 
     /* deliver to receiving application */
-    tolayer5(B, packet.payload);
+    if(rec[packet.seqnum] == false){
+      rec[packet.seqnum] = true;
+      for (i=0; i < 20; i++)
+        rec_pkt[packet.seqnum].payload[i] = packet.payload[i];
+    }
+    /* deliver all packets in order to application layer  */
+    while (rec[expectedseqnum] == true) {
+      tolayer5(B, packet.payload);
+      rec[expectedseqnum] = false;
+      expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
+    }
+
 
     /* send an ACK for the received packet */
-    sendpkt.acknum = expectedseqnum;
+    sendpkt.acknum = packet.seqnum;
+    sendpkt.seqnum = NOTINUSE;
 
-    /* update state variables */
-    expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
-  }
-  else {
-    /* packet is corrupted or out of order resend last ACK */
-    if (TRACE > 0)
-      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
-    if (expectedseqnum == 0)
-      sendpkt.acknum = SEQSPACE - 1;
-    else
-      sendpkt.acknum = expectedseqnum - 1;
-  }
-
-  /* create packet */
-  sendpkt.seqnum = B_nextseqnum;
-  B_nextseqnum = (B_nextseqnum + 1) % 2;
-
-  /* we don't have any data to send.  fill payload with 0's */
-  for ( i=0; i<20 ; i++ )
+    /* we don't have any data to send.  fill payload with 0's */
+    for ( i=0; i<20 ; i++ )
     sendpkt.payload[i] = '0';
 
-  /* computer checksum */
-  sendpkt.checksum = ComputeChecksum(sendpkt);
+    /* computer checksum */
+    sendpkt.checksum = ComputeChecksum(sendpkt);
 
-  /* send out packet */
-  tolayer3 (B, sendpkt);
+    /* send out packet */
+    tolayer3 (B, sendpkt);
+  }
 }
-
 /* the following routine will be called once (only) before any other */
 /* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
 {
   expectedseqnum = 0;
-  B_nextseqnum = 1;
+
 }
 
 /******************************************************************************
