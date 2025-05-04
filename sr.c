@@ -121,12 +121,10 @@ void A_input(struct pkt packet)
         starttimer(A,RTT);
     }
   }
-    else
-      if (TRACE > 0)
+    else if (TRACE > 0)
       printf ("----A: duplicate ACK received, do nothing!\n");
   }
-  else
-    if (TRACE > 0)
+  else if (TRACE > 0)
       printf ("----A: corrupted ACK is received, do nothing!\n");
 }
 
@@ -169,7 +167,7 @@ void A_init(void)
 /********* Receiver (B)  variables and procedures ************/
 
 static int expectedseqnum; /* the sequence number expected next by the receiver */
-static int B_nextseqnum __attribute__((unused));   /* the sequence number for the next packets sent by B */
+static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
 static struct pkt rec_pkt[SEQSPACE]; /* array to store packets received by B */
 static bool rec[SEQSPACE]; /* array to keep track of which packets have been received */
 
@@ -205,13 +203,13 @@ void B_input(struct pkt packet)
 
     /* we don't have any data to send.  fill payload with 0's */
     for ( i=0; i<20 ; i++ )
-    sendpkt.payload[i] = '0';
+      sendpkt.payload[i] = '0';
 
     /* computer checksum */
-    sendpkt.checksum = ComputeChecksum(sendpkt);
+      sendpkt.checksum = ComputeChecksum(sendpkt);
 
     /* send out packet */
-    tolayer3 (B, sendpkt);
+      tolayer3 (B, sendpkt);
   }
 }
 /* the following routine will be called once (only) before any other */
