@@ -135,7 +135,7 @@ void A_timerinterrupt(void)
     printf("----A: time out,resend packets!\n");
     
   if(TRACE > 0)
-    printf("----A: resending packet %d\n", buffer[windowfirst].seqnum);
+    printf("---A: resending packet %d\n", buffer[windowfirst].seqnum);
 
   /* resend oldest packet in window */
   tolayer3(A, buffer[windowfirst]);
